@@ -46,10 +46,9 @@ class SiteParser():
             if o in existing_headlines:
                 #headline exists, skip
                 continue
-            else:
-                #new headline; alert and write to file
-                print(f'{timestamp} ({sitename}): {o}')
-                SiteParser.write_headline_to_file(o, filename)
+            #new headline; alert and write to file
+            print(f'{timestamp} ({sitename}): {o}')
+            SiteParser.write_headline_to_file(o, filename)
                 
     @staticmethod
     def _get_soup(url):
