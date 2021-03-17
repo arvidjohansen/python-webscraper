@@ -1,14 +1,25 @@
-import os
 import datetime
+import os
 import re
 import requests
 import time
 
-from collections import namedtuple
 from bs4 import BeautifulSoup
+from collections import namedtuple
+from humanfriendly import format_timespan
 
 #static variables
 SLEEP_INTERVAL = 10
+DEBUG_LOG_NAME = 'debug.log'
+
+def write_debug_log(message, log_filename):
+        with open(log_filename,'a') as log_file:
+            log_file.write(f'{get_timestamp_string()} {message} \n')
+
+def get_timestamp_string():
+    ts = time.time()
+    timestamp = datetime.datetime.fromtimestamp(ts).strftime('%H:%M')
+    return timestamp
 
 Site = namedtuple('Site', ['name','url','filename','function_name'])
 
@@ -17,6 +28,8 @@ SITES = [
     Site('NRK','https://www.nrk.no','nrk.txt', 'get_headlines_nrk'),
     Site('DB','https://www.db.no','db.txt', 'get_headlines_nrk'),
     Site('ITAV','https://itavisen.no','itavisen.txt', 'get_headlines_nrk'),
+    #Site('RES','https://resett.no','resett.txt', 'get_headlines_nrk'),
+    Site('HRS','https://www.rights.no', 'hrs.txt','get_headlines_nrk')
 ]
 
 class SiteParser():
@@ -27,8 +40,7 @@ class SiteParser():
 
     @staticmethod
     def process_headlines(headlines, sitename, filename):
-        ts = time.time()
-        timestamp = datetime.datetime.fromtimestamp(ts).strftime('%H:%M')
+        created = 0
         
         #create the file if it dont exist
         try: open(filename) 
@@ -47,8 +59,10 @@ class SiteParser():
                 #headline exists, skip
                 continue
             #new headline; alert and write to file
-            print(f'{timestamp} ({sitename}): {o}')
+            print(f'{get_timestamp_string()} ({sitename}): {o}')
             SiteParser.write_headline_to_file(o, filename)
+            created += 1
+        return created
                 
     @staticmethod
     def _get_soup(url):
@@ -87,17 +101,29 @@ class SiteParser():
         return processed_headlines
 
 KEEP_GOING=True
+start_time = time.time()
+total_created = 0
 if __name__ == '__main__':
     os.system('cls') #clear screen
     
     print(f'Checking for new articles at {SLEEP_INTERVAL} second intervals...')
 
     while KEEP_GOING:
+        created = 0
+        
         for site in SITES:
             #call the designated function to fetch the headlines
             site_headlines = getattr(SiteParser, site.function_name)(site.url)
             #process headlines and write to file
-            SiteParser.process_headlines(site_headlines, site.name, site.filename) 
+            new_headlines = SiteParser.process_headlines(site_headlines, site.name, site.filename)
+            created += new_headlines
+            total_created += new_headlines
+            #write debug log
+        current_time = time.time()
+        timedelta = current_time - start_time
+        #write_debug_log(f'Active for {datetime.timedelta(seconds = timedelta)} seconds',DEBUG_LOG_NAME)
+        write_debug_log(f'Created now: {created} (total: {total_created}) {format_timespan(timedelta)}',DEBUG_LOG_NAME)
+        
         #sleep when sites have been updated    
         time.sleep(SLEEP_INTERVAL)
         
