@@ -28,8 +28,6 @@ SITES = [
     Site('NRK','https://www.nrk.no','nrk.txt', 'get_headlines_nrk'),
     Site('DB','https://www.db.no','db.txt', 'get_headlines_nrk'),
     Site('ITAV','https://itavisen.no','itavisen.txt', 'get_headlines_nrk'),
-    #Site('RES','https://resett.no','resett.txt', 'get_headlines_nrk'),
-    Site('HRS','https://www.rights.no', 'hrs.txt','get_headlines_nrk')
 ]
 
 class SiteParser():
